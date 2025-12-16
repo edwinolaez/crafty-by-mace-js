@@ -36,7 +36,7 @@ export default function Cart() {
       ) : (
         <>
           {cart.map(item => (
-            <div key={item.id} className="bg-white/70 backdrop-blur rounded-3xl p-8 mb- mb-8 flex gap-8 items-center shadow-xl">
+            <div key={item.id} className="bg-white/70 backdrop-blur rounded-3xl p-8 mb-8 flex gap-8 items-center shadow-xl">
               <Image src={item.image} width={160} height={160} className="rounded-2xl" alt="" />
               <div className="flex-1">
                 <h3 className="text-3xl font-bold text-brand-deep">{item.name}</h3>
