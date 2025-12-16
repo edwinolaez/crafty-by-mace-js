@@ -24,9 +24,9 @@ export default async function Home() {
             <Image
               src="/logo.png"
               alt="Crafty by m.Ace Logo"
-              width={160}
-              height={160}
-              className="drop-shadow-2xl relative z-10"
+              width={280}
+              height={280}
+              className="drop-shadow-2xl relative z-10 rounded-full"
               priority
             />
           </div>

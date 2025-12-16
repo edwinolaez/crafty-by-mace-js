@@ -50,40 +50,40 @@ export default async function ProductPage({ params }) {
           Back to Shop
         </Link>
 
-        {/* Main Layout - Always 2 columns on desktop */}
+        {/* Main Layout - Balanced 2 columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          {/* Image Column - Large but controlled */}
-          <div className="relative">
+          {/* Image Column - FIXED SIZE */}
+          <div className="relative w-full max-w-xl mx-auto lg:mx-0">
             {product.images?.[0] ? (
-              <div className="relative aspect-[4/5] max-w-3xl rounded-3xl overflow-hidden glass-sidebar shadow-2xl">
+              <div className="relative aspect-square w-full rounded-3xl overflow-hidden glass-sidebar shadow-2xl">
                 <Image
                   src={product.images[0]}
                   alt={product.name}
                   fill
-                  sizes="(max-width: 1024px) 100vw, 700px"
+                  sizes="(max-width: 1024px) 100vw, 500px"
                   className="object-cover"
                   priority
                 />
               </div>
             ) : (
-              <div className="aspect-[4/5] max-w-3xl rounded-3xl glass-sidebar shadow-2xl flex items-center justify-center bg-gradient-to-br from-brand-deep/50 to-brand-lavender/40">
-                <ProductIcon className="w-80 h-80 text-white/80" strokeWidth={1.5} />
+              <div className="aspect-square w-full rounded-3xl glass-sidebar shadow-2xl flex items-center justify-center bg-gradient-to-br from-brand-deep/50 to-brand-lavender/40">
+                <ProductIcon className="w-48 h-48 text-white/80" strokeWidth={1.5} />
               </div>
             )}
           </div>
 
           {/* Details Column */}
-          <div className="space-y-12">
+          <div className="space-y-8">
             <div>
-              <h1 className="text-6xl md:text-7xl font-bold text-white mb-8">
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
                 {product.name}
               </h1>
-              <p className="text-2xl text-brand-cream/80 leading-relaxed max-w-2xl">
+              <p className="text-xl text-brand-cream/80 leading-relaxed">
                 {product.description}
               </p>
             </div>
 
-            <div className="text-7xl font-bold">
+            <div className="text-6xl font-bold">
               <span className="bg-gradient-to-r from-brand-lavender via-brand-coral to-brand-gold bg-clip-text text-transparent">
                 ${product.price}
               </span>
@@ -91,9 +91,9 @@ export default async function ProductPage({ params }) {
 
             {/* Stock Status */}
             {product.stock !== undefined && (
-              <p className="text-2xl">
+              <p className="text-xl">
                 {product.stock > 0 ? (
-                  <span className="text-green-400">In Stock ({product.stock})</span>
+                  <span className="text-green-400">✓ In Stock ({product.stock})</span>
                 ) : (
                   <span className="text-red-400">Out of Stock</span>
                 )}
@@ -101,40 +101,40 @@ export default async function ProductPage({ params }) {
             )}
 
             {/* Features List */}
-            <ul className="space-y-6 text-xl text-brand-cream/80">
-              <li className="flex items-center gap-4">
-                <Sparkles className="w-8 h-8 text-brand-lavender" />
+            <ul className="space-y-4 text-lg text-brand-cream/80">
+              <li className="flex items-center gap-3">
+                <Sparkles className="w-6 h-6 text-brand-lavender" />
                 <span>Handcrafted with love and premium materials</span>
               </li>
-              <li className="flex items-center gap-4">
-                <Package className="w-8 h-8 text-brand-lavender" />
-                <span>Unique piece – no two are exactly alike</span>
+              <li className="flex items-center gap-3">
+                <Package className="w-6 h-6 text-brand-lavender" />
+                <span>Unique piece — no two are exactly alike</span>
               </li>
-              <li className="flex items-center gap-4">
-                <Gift className="w-8 h-8 text-brand-lavender" />
+              <li className="flex items-center gap-3">
+                <Gift className="w-6 h-6 text-brand-lavender" />
                 <span>Perfect gift for any occasion</span>
               </li>
             </ul>
 
             {/* Add to Cart */}
-            <div className="pt-8">
+            <div className="pt-6">
               <AddToCartButton product={product} />
             </div>
 
-            <p className="text-center text-brand-cream/60 text-xl italic pt-10">
+            <p className="text-center text-brand-cream/60 text-lg italic pt-6">
               ✨ Each charm is carefully handcrafted just for you
             </p>
           </div>
         </div>
 
         {/* Optional "You May Also Like" */}
-        <div className="mt-40 text-center">
-          <h2 className="text-5xl font-bold mb-16">
+        <div className="mt-32 text-center">
+          <h2 className="text-4xl font-bold mb-12">
             <span className="bg-gradient-to-r from-brand-lavender to-brand-coral bg-clip-text text-transparent">
               You May Also Like
             </span>
           </h2>
-          <p className="text-brand-cream/70 text-2xl">More magic coming soon...</p>
+          <p className="text-brand-cream/70 text-xl">More magic coming soon...</p>
         </div>
       </div>
     </div>

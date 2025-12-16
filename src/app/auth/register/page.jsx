@@ -74,9 +74,9 @@ export default function Register() {
             <Image
               src="/logo.png"
               alt="Crafty by m.Ace Logo"
-              width={140}
-              height={140}
-              className="drop-shadow-2xl relative z-10"
+              width={240}
+              height={240}
+              className="drop-shadow-2xl relative z-10 rounded-full"
               priority
             />
           </div>
