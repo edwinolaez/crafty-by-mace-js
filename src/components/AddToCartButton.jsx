@@ -35,7 +35,7 @@ export default function AddToCartButton({ product }) {
 
       // Show success state
       setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+      alert("Item added to cart!");
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add to cart. Please try again.");
