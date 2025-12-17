@@ -45,7 +45,7 @@ export default function ProductCard({ product }) {
             {product.images?.[0] && (
               <Image
                 src={product.images[0]}
-                alt={product.name}
+                alt={product.name || "Handmade charm"}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover transition-opacity duration-700"

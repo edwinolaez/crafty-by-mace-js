@@ -18,7 +18,8 @@ import {
   Wand2,
   Upload,
   FileSpreadsheet,
-  ImagePlus
+  ImagePlus,
+  AlertTriangle
 } from "lucide-react";
 
 // Icon options for products
@@ -57,6 +58,10 @@ export default function Admin() {
   const [products, setProducts] = useState([]);
   const [showProducts, setShowProducts] = useState(false);
 
+  // Price validator states
+  const [checking, setChecking] = useState(false);
+  const [priceIssues, setPriceIssues] = useState([]);
+
   // Tab state
   const [activeTab, setActiveTab] = useState("single");
 
@@ -72,6 +77,71 @@ export default function Admin() {
       setProducts(prods);
     } catch (error) {
       console.error("Error loading products:", error);
+    }
+  };
+
+  // CHECK FOR PRICE ISSUES
+  const checkProductPrices = async () => {
+    setChecking(true);
+    try {
+      const snapshot = await getDocs(collection(db, "products"));
+      const problemProducts = [];
+
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        const priceValue = data.price;
+        
+        if (priceValue === undefined || priceValue === null || isNaN(parseFloat(priceValue))) {
+          problemProducts.push({
+            id: docSnap.id,
+            name: data.name || "Unnamed Product",
+            price: priceValue,
+            issue: priceValue === undefined 
+              ? "Price is undefined" 
+              : priceValue === null 
+                ? "Price is null" 
+                : "Price is not a number"
+          });
+        }
+      });
+
+      setPriceIssues(problemProducts);
+      
+      if (problemProducts.length === 0) {
+        alert("✅ All products have valid prices!");
+      } else {
+        alert(`⚠️ Found ${problemProducts.length} product(s) with price issues`);
+      }
+    } catch (error) {
+      console.error("Error checking products:", error);
+      alert("Failed to check products");
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  // FIX INDIVIDUAL PRODUCT PRICE
+  const fixProductPrice = async (productId, productName) => {
+    const defaultPrice = prompt(`Enter a price for "${productName}" (e.g., 9.99):`);
+    if (!defaultPrice) return;
+
+    const priceNum = parseFloat(defaultPrice);
+    if (isNaN(priceNum)) {
+      alert("Invalid price. Please enter a number.");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "products", productId), { 
+        price: priceNum 
+      });
+      
+      alert("✅ Price updated successfully!");
+      checkProductPrices(); // Refresh the list
+      loadProducts(); // Refresh product list
+    } catch (error) {
+      console.error("Error updating price:", error);
+      alert("Failed to update price");
     }
   };
 
@@ -94,10 +164,8 @@ export default function Admin() {
 
       // Check if using local image path or uploading to Storage
       if (useLocalImage && localImagePath) {
-        // Use local image path (e.g., "/charms/blossom.jpg")
         imageUrl = localImagePath;
       } else if (file) {
-        // Upload to Firebase Storage
         const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
         imageUrl = await getDownloadURL(storageRef);
@@ -117,7 +185,6 @@ export default function Admin() {
 
       alert("Product added successfully! ✨");
       
-      // Reset form
       setName("");
       setPrice("");
       setDesc("");
@@ -136,7 +203,6 @@ export default function Admin() {
     }
   };
 
-  // Handle Excel file selection
   const handleExcelFile = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
@@ -145,7 +211,6 @@ export default function Admin() {
     }
   };
 
-  // Read Excel file
   const readExcelFile = (file) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -163,7 +228,6 @@ export default function Admin() {
     reader.readAsArrayBuffer(file);
   };
 
-  // Import products from Excel
   const importFromExcel = async () => {
     if (!auth.currentUser) {
       alert("Please login first");
@@ -181,7 +245,6 @@ export default function Admin() {
       let successCount = 0;
       
       for (const row of excelData) {
-        // Get image path from Excel (e.g., "/charms/blossom.jpg")
         const imagePath = row.Image || row.image || row.ImagePath || "";
         
         const product = {
@@ -214,7 +277,6 @@ export default function Admin() {
     }
   };
 
-  // Upload image to existing product (Storage)
   const uploadImageToProduct = async (productId, imageFile) => {
     try {
       const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
@@ -234,7 +296,6 @@ export default function Admin() {
     }
   };
 
-  // NEW: Update product with local image path
   const updateProductImagePath = async (productId, imagePath) => {
     try {
       const productRef = doc(db, "products", productId);
@@ -275,6 +336,63 @@ export default function Admin() {
           </h1>
         </div>
 
+        {/* PRICE VALIDATOR SECTION - NEW */}
+        <div className="glass-sidebar rounded-3xl p-8 border-2 border-yellow-500/30">
+          <div className="flex items-center gap-3 mb-6">
+            <AlertTriangle className="w-8 h-8 text-yellow-400" />
+            <h2 className="text-3xl font-bold text-white">Price Validator</h2>
+          </div>
+          
+          <p className="text-brand-cream/80 mb-6">
+            Check all products for missing or invalid prices that could cause "Add to Cart" errors.
+          </p>
+
+          <button
+            onClick={checkProductPrices}
+            disabled={checking}
+            className="holo-button px-8 py-4 rounded-2xl text-xl font-bold mb-6"
+          >
+            {checking ? "Checking..." : "🔍 Check All Products for Price Issues"}
+          </button>
+
+          {priceIssues.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-red-400 font-bold text-xl">
+                ⚠️ Found {priceIssues.length} product(s) with price issues:
+              </p>
+              
+              {priceIssues.map(issue => (
+                <div key={issue.id} className="glass-button-dark p-5 rounded-2xl border-2 border-red-500/30">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-white font-bold text-lg">{issue.name}</p>
+                      <p className="text-brand-cream/70 text-sm">ID: {issue.id}</p>
+                      <p className="text-red-400 font-semibold mt-2">{issue.issue}</p>
+                      <p className="text-brand-cream/50 text-xs">
+                        Current value: {issue.price === undefined ? "undefined" : issue.price === null ? "null" : String(issue.price)}
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => fixProductPrice(issue.id, issue.name)}
+                      className="glass-button-light px-6 py-3 rounded-xl text-sm font-semibold hover:scale-105 transition-transform"
+                    >
+                      Fix Price
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {priceIssues.length === 0 && !checking && (
+            <div className="glass-button-dark p-6 rounded-2xl text-center">
+              <p className="text-green-400 text-xl font-semibold">✅ No price issues found!</p>
+              <p className="text-brand-cream/70 mt-2">All products have valid prices.</p>
+            </div>
+          )}
+        </div>
+
         {/* Tab Switcher */}
         <div className="flex gap-4 justify-center mb-8">
           <button
@@ -313,7 +431,6 @@ export default function Admin() {
             <h2 className="text-3xl font-bold text-white mb-6 text-center">Add Single Product</h2>
             
             <div className="space-y-6">
-              {/* Image Option Toggle */}
               <div className="glass-button-dark p-4 rounded-2xl">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
@@ -328,7 +445,6 @@ export default function Admin() {
                 </label>
               </div>
 
-              {/* Conditional Image Input */}
               {useLocalImage ? (
                 <div>
                   <label className="block text-white font-medium mb-3 text-lg">
@@ -340,9 +456,6 @@ export default function Admin() {
                     onChange={(e) => setLocalImagePath(e.target.value)}
                     className="bg-white/10 backdrop-blur-md border-brand-lavender/30 text-white placeholder-brand-cream/50 text-lg py-6 rounded-2xl"
                   />
-                  <p className="text-brand-cream/60 text-sm mt-2">
-                    💡 Available images: blossom.jpg, petCat.jpg, bubbles.jpg, etc.
-                  </p>
                 </div>
               ) : (
                 <div>
@@ -426,13 +539,12 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Excel Import Section */}
+        {/* Excel Import Section - Keeping original */}
         {activeTab === "bulk" && (
           <div className="glass-sidebar rounded-3xl p-8">
             <h2 className="text-3xl font-bold text-white mb-6 text-center">Import from Excel</h2>
             
             <div className="space-y-6">
-              {/* Instructions */}
               <div className="glass-button-dark p-6 rounded-2xl">
                 <h3 className="text-xl font-semibold text-white mb-3">📋 Excel Format Required:</h3>
                 <p className="text-brand-cream/80 mb-2">Your Excel file should have these columns:</p>
@@ -440,14 +552,13 @@ export default function Admin() {
                   <li><strong>Name</strong> - Product name (required)</li>
                   <li><strong>Price</strong> - Product price in dollars (required)</li>
                   <li><strong>Description</strong> - Product description</li>
-                  <li><strong>Category</strong> - Product category (e.g., Charms)</li>
+                  <li><strong>Category</strong> - Product category</li>
                   <li><strong>Stock</strong> - Stock quantity</li>
-                  <li><strong>Icon</strong> - Icon name (sparkles, heart, star, etc.)</li>
-                  <li><strong>Image</strong> - Image path (e.g., /charms/blossom.jpg)</li>
+                  <li><strong>Icon</strong> - Icon name</li>
+                  <li><strong>Image</strong> - Image path</li>
                 </ul>
               </div>
 
-              {/* File Upload */}
               <div>
                 <label className="block text-white font-medium mb-3 text-lg">Upload Excel File</label>
                 <input 
@@ -458,7 +569,6 @@ export default function Admin() {
                 />
               </div>
 
-              {/* Preview Data */}
               {excelData.length > 0 && (
                 <div className="glass-button-dark p-6 rounded-2xl">
                   <h3 className="text-xl font-semibold text-white mb-4">Preview ({excelData.length} products)</h3>
@@ -494,7 +604,6 @@ export default function Admin() {
                 </div>
               )}
 
-              {/* Import Button */}
               {excelData.length > 0 && (
                 <Button
                   onClick={importFromExcel}
@@ -508,7 +617,7 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Product List */}
+        {/* Product List - Keeping original */}
         {showProducts && (
           <div className="glass-sidebar rounded-3xl p-8">
             <h2 className="text-3xl font-bold text-white mb-6 text-center">All Products</h2>
@@ -520,7 +629,6 @@ export default function Admin() {
                 {products.map((product) => (
                   <div key={product.id} className="glass-button-dark p-6 rounded-2xl">
                     <div className="flex gap-6 items-center mb-4">
-                      {/* Product Image/Icon */}
                       <div className="w-24 h-24 flex-shrink-0 bg-gradient-to-br from-brand-lavender/20 to-brand-coral/20 rounded-xl flex items-center justify-center overflow-hidden">
                         {product.images && product.images[0] ? (
                           <Image
@@ -536,7 +644,6 @@ export default function Admin() {
                         )}
                       </div>
 
-                      {/* Product Info */}
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-white">{product.name}</h3>
                         <p className="text-brand-cream/70">${product.price} • Stock: {product.stock || 0}</p>
@@ -547,7 +654,6 @@ export default function Admin() {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3 flex-wrap">
                       <label className="glass-button-light px-4 py-2 rounded-xl cursor-pointer hover:scale-105 transition-transform flex items-center gap-2">
                         <ImagePlus className="w-5 h-5" />
